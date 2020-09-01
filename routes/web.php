@@ -130,3 +130,12 @@ Route::middleware('throttle:5,1')->group(function(){
         return "该组内的路由1分钟内只能访问5次，超出次数限制后就会返回429错误Too Many Requests";
     });
 });
+// 灵活限制
+Route::middleware('throttle:rate_limit,1')->group(function () {
+    Route::get('/user', function () {
+        // 在 User 模型中设置自定义的 rate_limit 属性值
+    });
+    Route::get('/post', function () {
+        // 在 Post 模型中设置自定义的 rate_limit 属性值
+    });
+});
