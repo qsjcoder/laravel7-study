@@ -125,3 +125,8 @@ Route::fallback(function(){
     // 例http://lv7.test/666  就会返回上面这句话
 });
 // 频率限制
+Route::middleware('throttle:5,1')->group(function(){
+    Route::get('/limit_route',function(){
+        return "该组内的路由1分钟内只能访问5次，超出次数限制后就会返回429错误Too Many Requests";
+    });
+});
