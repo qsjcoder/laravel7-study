@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>Show</title>
 </head>
 <body>
-    {{var_dump($tasks)}} //array(2) { ["qsj"]=> string(8) "real-man" ["hhj"]=> string(4) "nice" }
+    {{$id}}或者
+    <?php echo $id?>
 
-    
+<dd>共享的视图变量 :{{dd($sitename,$siteurl)}} </dd>
 </body>
 </html>

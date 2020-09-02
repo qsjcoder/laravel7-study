@@ -139,3 +139,40 @@ Route::middleware('throttle:rate_limit,1')->group(function () {
         // 在 Post 模型中设置自定义的 rate_limit 属性值
     });
 });
+// 表单请求方法伪造 由于表单请求只支持GET和POST请求
+// 所以要实现其他请求：DELETE PUT PATCH OPTIONS则需要通过表单方法伪造来完成
+// 为方便起见 所以有操作都在闭包内完成
+Route::get('dtask/{id}/delete',function($id){
+    return '<form action="'.route('dtask.delete',[$id]).'" method="post" >
+        <input type="hidden" name="_method" value="DELETE">
+        <input type="hidden" name="_token" value="'.csrf_token().'">
+        <button type="submit">删除任务</button>
+        </form>'; 
+});
+// 配合上面的闭包路由完成删除路由
+Route::delete('dtask/{id}',function($id){
+    return "Delete task id:".$id; //添加解决方法哪一行代码后点击删除任务就会返回：Delete task id:666
+})->name('dtask.delete');
+// 完成上面两步后，此时点击页面的的删除任务会出现419 | Page Expired页面到期错误
+// 这其实是因为默认情况下，为了安全考虑，Laravel 期望所有路由都是「只读」操作的（对应请求方式是 GET、HEAD、OPTIONS），
+// 如果路由执行的是「写入」操作（对应请求方式是 POST、PUT、PATCH、DELETE），
+// 则需要传入一个隐藏的 Token 字段（_token）以避免[跨站请求伪造攻击]（CSRF）。
+// 在我们上面的示例中，请求方式是 DELETE，但是并没有传递 _token 字段，所以会出现异常。
+// 解决方法：加一行 <input typpe="hidden" name="_token" value="'.csrf_token().'">
+// 还可以用csrf_field()方法 不过要去掉最外层的单引号，重新用点连接表单
+
+// 视图
+// php 
+Route::get('users/{id?}', function ($id = 1) {
+    return view('users.profile', ['id' => $id]);
+})->name('users.profile');
+
+// blade
+Route::get('page/{id}', function ($id) {
+    return view('page.show', ['id' => $id]);
+})->where('id', '[0-9]+');
+
+// css
+Route::get('page/css', function () {
+    return view('page.style');
+});

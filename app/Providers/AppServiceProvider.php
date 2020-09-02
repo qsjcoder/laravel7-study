@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        //在视图之间共享变量
+        view()->share("sitename",'中国节日倒计时');
+        view()->share('siteurl','china-day.cn');
     }
 }
