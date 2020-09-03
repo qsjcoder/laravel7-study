@@ -176,3 +176,32 @@ Route::get('page/{id}', function ($id) {
 Route::get('page/css', function () {
     return view('page.style');
 });
+
+// 模板引擎路由
+Route::get('blade/master',function(){
+    return view('layouts.master');
+});
+Route::get('blade/child',function(){
+    return view('layouts.child');
+});
+
+// View Composer
+Route::get('partials/header',function(){
+    return view('partials.header');
+});
+
+Route::get('partials/footer',function(){
+    return view('partials.footer');
+});
+
+// 获取用户请求
+Route::post('request/form','RequestController@form');
+// 为了测试，我们可以在 Postman 中模拟请求数据，
+// 不过在测试前需要在 app/Http/Middleware/VerifyCsrfToken.php 
+// 中间件中将测试路由排除在外，否则会因为 POST 请求触发 CSRF 攻击防护验证而导致请求失败：
+// protected $except = [
+//  'request/form*'
+// ];
+// 然后可以在URL中输入参数http://lv7.test/request/form?id=123&name=55
+// 获取路由参数值
+Route::post('request/route/{id}','RequestController@route');

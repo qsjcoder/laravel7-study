@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Show</title>
+    <title>Footer</title>
 </head>
 <body>
-    {{$id}}或者
-    <?php echo $id?>
+    {{$posts_array}}  <br>
 
-<dd>共享的视图变量 :{{ $sitename }} | {{$siteurl}} </dd>
+    {{$posts_all}}
+    
 </body>
 </html>
+ 
