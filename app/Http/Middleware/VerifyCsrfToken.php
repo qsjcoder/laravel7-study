@@ -12,7 +12,8 @@ class VerifyCsrfToken extends Middleware
      * @var array
      */
     protected $except = [
-        //
-        'request/form*'
+        //忽略csrf校验的路由
+        'request/form*',
+        'request/route*'
     ];
 }

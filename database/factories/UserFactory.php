@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 | model instances for testing / seeding your application's database.
 |
 */
-
+// 创建工厂命令：php artisan make:factory UserFactory
 $factory->define(User::class, function (Faker $faker) {
     return [
         'name' => $faker->name,

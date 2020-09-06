@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Support\Facades\Auth;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -205,3 +205,14 @@ Route::post('request/form','RequestController@form');
 // 然后可以在URL中输入参数http://lv7.test/request/form?id=123&name=55
 // 获取路由参数值
 Route::post('request/route/{id}','RequestController@route');
+
+// 基于laravel + vue组件实现文件异步上传
+// 定义文件上传路由
+//-- 用于显式上传表单  Laravel 提供的 Bootstrap 和 Vue 脚手架代码位于 laravel/ui 依赖包中，需要通过 Composer 下载安装： composer require laravel/uiyes 
+Route::get('request/upload_form','RequestController@upload_form');
+//-- 用于处理文件上传
+Route::post('request/upload_file','RequestController@upload_file');
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');

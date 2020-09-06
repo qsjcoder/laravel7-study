@@ -17,3 +17,8 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->describe('Display an inspiring quote');
+
+// 基于闭包实现Artisan命令
+Artisan::command('welcome:message_route',function(){
+    $this->info('热烈欢迎您！'); //运行php artisan welcome:message_route 就会在控制台输出“热烈欢迎您！”
+})->describe('打印欢迎信息'); //描述信息在运行php artisan list可以查看到

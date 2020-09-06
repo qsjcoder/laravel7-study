@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // 解决迁移数据库时报错unique太长的问题
+        Schema::defaultStringLength(191);
+
         //在视图之间共享变量
         view()->share("sitename",'中国节日倒计时');
         view()->share('siteurl','china-day.cn');

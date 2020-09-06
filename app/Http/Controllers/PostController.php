@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+// 资源控制器
 class PostController extends Controller
 {
     /**

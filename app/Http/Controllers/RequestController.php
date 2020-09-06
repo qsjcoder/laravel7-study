@@ -30,7 +30,27 @@ class RequestController extends Controller
         return $request->input('books.1.author');
         // return $request->books[1]['author'];
     }
+    // 获取路由参数  lv7.test/request/route/666
     public function route(Request $request,$id){
-        dump($request->segments());
+        return $request->segments(); //返回     
+    }
+    // [
+    // "request",
+    // "route",
+    // "666"
+   //  ]
+
+    // 处理显式上传表单
+    public function upload_form(){
+        return view('request.form');
+    }
+
+    // 处理文件上传
+    public function upload_file(Request $request){
+        // 假定前端文件输入框对应name属性是picture
+        // 如果请求包含该字段，则将对应字段打印出来
+        if($request->hasFile('picture')){
+            dd($request->file('picture'));
+        }
     }
 }
