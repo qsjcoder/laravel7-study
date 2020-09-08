@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -216,3 +218,88 @@ Route::post('request/upload_file','RequestController@upload_file');
 Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
+
+// 数据库
+// 原生statement语句
+Route::get('statement',function(){
+    // $sql = DB::statement('select * from users');// 成功执行sql成功返回true，并不能返回查询结果
+    // dd($sql); 
+    // $sql2 = DB::statement('insert into users(name,email,password) values("qsj","qsj@1024.com","123") ');
+    // dd($sql2);
+});
+Route::get('select',function(){
+   $sql1 = DB::select('select * from `users`');
+   dd($sql1);
+});
+// 原生的curd都有DB门面下相关函数相对应  insert、update、delete与sql原生语句写法一致
+
+// 使用查询构建器进行增删改查
+Route::get('curd',function(){
+// 查询记录
+    // 查询数据表中所有数据
+    //  dd(DB::table('users')->get()); //dd()函数会结束脚本exit(1)就不能执行下面的语句
+    dump(DB::table('users')->get());
+    // name :Christelle Ziemann
+    dump(DB::table('users')->where('name','Christelle Ziemann')->get());
+    // 返回查询结果中第一条记录
+    dump(DB::table('users')->first());
+    // 默认返回所有字段，返回指定字段用select方法    thinkPHP时用field方法
+    dump(DB::table('users')->select('id','name')->get());//这样就会只返回指定字段的数据
+
+// 插入记录
+    // insert()方法
+    $insert = DB::table('content')->insert([
+        'user_id'=>random_int(1,10),//1~10之间的随机数1和10都能被取到 
+        'content'=>"hello world",
+        'created_at'=>now()
+    ]);
+    dump($insert);//插入成功返回true
+
+    // 在查询后返回对应记录的主键id
+    $insertGetId = DB::table('content')->insertGetId([
+        'user_id'=>random_int(10,20),'content'=>bcrypt('i love you'),'updated_at'=>now()
+    ]);
+    dump($insertGetId);//输出对应主键id
+    
+    // 一次插入多条数据
+    $insert = DB::table('content')->insert([
+        ['user_id'=>random_int(10,20),'content'=>bcrypt('i love you'),'updated_at'=>now()],
+        ['user_id'=>random_int(10,20),'content'=>bcrypt('i love you too'),'updated_at'=>now()],
+    ]);
+
+
+
+});
+Route::get('update',function(){
+// 更新记录
+        // update()返回受影响的行数 //where('id','>',6)第二个符号参数省略的话默认是等于
+        $update = DB::table('content')->where('id',1)->update([
+            'content'=>"hello my love"
+        ]);
+        // 如果修改的内容与原来的相同，那么就不会执行 即返回影响行数为0
+        dump("受影响的行数：",$update);
+
+        // 如果数值字段更新的话还可以用increment和decrement用于数值增减操作
+        // 默认步长是1，也可以通过第二个参数指定步长
+        $increment1 = DB::table('content')->where('id',5)->increment('user_id');//user_id +1 
+        dump($increment1); //返回受影响函数
+        $increment2 = DB::table('content')->where('id',6)->increment('user_id',5);//user_id + 5
+        dump($increment2);
+        $decrement = DB::table('content')->where('id',20)->decrement('user_id',2);//user_id - 2
+        dump($decrement);
+});
+// 删除记录
+Route::get('delete',function(){
+    $delete = DB::table('content')->whereBetween('id',[25,28])->delete();
+    dump($delete);//返回受影响的行数    
+
+    // 如果要清空整张表可以通过不指定where条件来实现
+    // $alldelete = DB::table('test')->delete();   
+    
+    // 如果想在清空记录后重置自增ID，可以通过truncate()方法
+    $trun = DB::table('test')->truncate();
+
+    // $Truncate = DB::table('content')->whereBetween('id',[24,30])->truncate();
+    // dump($Truncate);
+    // 实验证明：truncate函数会忽视前=前面的条件语句会直接清空整张表，并重置id
+});

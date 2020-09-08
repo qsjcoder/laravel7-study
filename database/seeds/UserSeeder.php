@@ -14,6 +14,7 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
+        // 创建该种子类：php artisan make:seeder UserSeeder
         //输入命令：php artisan db:seed 运行run函数用以填充数据
         // $this->call(UserSeeder::class);
         // DB::table('users')->insert([
