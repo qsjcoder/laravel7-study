@@ -16,7 +16,8 @@ class DatabaseSeeder extends Seeder
         // 或者指定运行填充器的run方法：php artisan db:seed --class=UserSeeder
         // $this->call(UserSeeder::class);
 
-        $this->call(ContentSeeder::class);
+        // $this->call(ContentSeeder::class);
+        $this->call(PostTableSeeder::class);
 
         // 生成填充器类 php artisan make:seeder UserSeeder
     }

@@ -1,4 +1,5 @@
 <?php
+namespace App;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -303,3 +304,190 @@ Route::get('delete',function(){
     // dump($Truncate);
     // 实验证明：truncate函数会忽视前=前面的条件语句会直接清空整张表，并重置id
 });
+
+// 查询构建起进阶
+Route::get('advance',function(){
+    // 用value返回指定查询字段的值
+    $value = DB::table('content')->where('id',1)->value('content');
+    dump($value);//直接返回id=1的content字段的值，没有其他多余数据
+
+    // 判断某个字段是否存在可以通过exists()方法
+    $exists = DB::table('content')->where('content',"hello world")->exists();
+    dump($exists);//存在返回true，不存在返回false
+
+    // 与上面的相反的函数doesntExist() 不存在返回true存在返回false
+    $doesntExists = DB::table('content')->where('content','hello world')->doesntExist();
+    dump($doesntExists);
+
+    // 以主键 ID 值为键，以某个字段值为值构建关联数组
+    $array = DB::table('users')->where('id',"<",10)->pluck('email','id');//第一个参数为值，第二个参数为键(可以省略，然后生成的数组下标默认从数字0开始)
+    dump($array);
+    // 有的时候，我们从数据库返回的结果集比较大，一次性返回进行处理有可能会超出 PHP 内存限制，
+    // 这时候，我们可以借助 chunk 方法将其分割成多个的组块依次返回进行处理：
+    $names = [];
+    DB::table('users')->orderBy('id')->chunk(5, function ($users) use (&$names) {
+        foreach ($users as $user) {
+            $names[] = $user->name;
+        }
+    });
+    // 以上代码的意思是对 users 按照 id 字段升序排序，然后将获取的结果集每次返回5个进行处理，将用户名依次放到 $names 数组中。
+
+    // 聚合函数
+    // 在开发后台管理系统时，经常需要对数据进行统计、求和、计算平均值、最小值、最大值等，
+    // 对应的方法名分别是 count、sum、avg、min、max：
+    $num = DB::table('users')->count();       # 计数     9
+    $sum = DB::table('users')->sum('id');     # 求和    45
+    $avg = DB::table('users')->avg('id');     # 平均值   5
+    $min = DB::table('users')->min('id');     # 最小值   1
+    $max = DB::table('users')->max('id');     # 最大值   9
+});
+Route::get('array',function(){
+    // 测试reset函数:将数组的指针指向第一个元素 常配合next、current等函数使用
+    $arr = DB::table('content')->get();
+    dump($arr);
+    dump(reset($arr));
+});
+// 高级Where查询
+    
+Route::get('where',function(){
+    // 模糊查询like
+    $like =  DB::table('content')->where('content','like','%hello%')->get();
+    dump($like);
+
+    // and查询
+   $and = DB::table('users')->where('id','>',1)->where('id','<',20)->get();
+   dump($and);
+    // 用数组表示and语句 where id >10 and id <20
+    $arr_and = DB::table('users')->where([
+        ['id','<',20],
+        ['id','>',10]
+    ])->get(); 
+    dump($arr_and);
+
+    // or语句 where id >10 or user_id <20
+   $oWhere = DB::table('content')->where('id','<',20)->orWhere('user_id','>',10)->get();
+   dump($oWhere);
+
+    // between语句 在一些涉及数字和时间的查询中，between语句可以派上用场
+    // where id between 1 and 10
+    $whereBetween = DB::table('users')->whereBetween('id',[1,10])->get();
+    dump($whereBetween);
+
+    // whereNotBetween 用于获取不在指定区间的数据库记录
+    $whereNotBetween = DB::table('users')->whereNotBetween('id',[10,30])->get();
+    dump($whereNotBetween);
+
+    // in查询 用whereIn方法，用于需要查询的字段值是某个序列集合的子集的时候
+    // 原生语句：where user_id in(10,15,16)   个人觉得此方法与与select方法类似
+    $whereIn = DB::table('content')->whereIn('user_id',[10,15,16])->get();
+    dump($whereIn);
+    // 与之对应的还有一个whereNotIn方法
+
+    // null查询  返回指定字段为空值得数据集 where created_at is null 
+    $whereNull = DB::table('content')->whereNull('created_at')->get();
+    dump($whereNull);
+    // 与之相反的还有：whereNotNull  sql: where email_verified_at is not nulll
+    // DB::table('users')->whereNotNull('email_verified_at')->get();
+
+    // 日期查询
+    $whereYear = DB::table('users')->whereYear('created_at',2020)->get();// 返回在2020年创建的数据
+    dump($whereYear);
+    // 月 天 时等等类似
+    // DB::table('posts')->whereMonth('created_at', '11')->get();    # 月
+    // DB::table('posts')->whereDay('created_at', '28')->get();      # 一个月的第几天
+    // DB::table('posts')->whereDate('created_at', '2018-11-28')->get();  # 具体日期
+    // DB::table('posts')->whereTime('created_at', '14:00')->get();  # 时间
+    // 上面这几个方法同时还支持 orWhereYear、orWhereMonth、orWhereDay、orWhereDate、orWhereTime。
+
+    // 字段之间比较查询,即两列之间比较 whereColumn  sql:where id < user_id
+    $whereColumn = DB::table('content')->whereColumn('id','<','user_id')->get();
+    dump($whereColumn);
+
+    // JSON查询
+    // 从 MySQL 5.7 开始，数据库字段原生支持 JSON 类型，对于 JSON 字段的查询，和普通 where 查询并无区别，只是支持对指定 JSON 属性的查询：
+    // 假如有一个字段是options，并且有键language，值为en的数据
+    // DB::table('users')->where('options->language','en')->get();
+    // 如果属性字段是个数组，还支持通过 whereJsonContains 方法对数组进行包含查询：
+    // DB::table('users')
+    // ->whereJsonContains('options->languages', 'en_US')
+    // ->get();
+    
+    // DB::table('users')
+    //     ->whereJsonContains('options->languages', ['en_US', 'zh_CN'])
+    //     ->get();
+        dump("--------------高级查询------------------");
+    // 用闭包函数函数完成复杂的多条件查询
+    // 原生语句 select * from content where id<=20 or (id>5 and user_id<15 and updated_at <'2020-09-08 23:03' )
+    $closer = DB::table('content')->where('id','<',20)->orWhere(function($query){
+        $query->where('id','>',5)->where('user_id','<',15)->whereDate('updated_at','<','2020-09-08')->whereTime('updated_at','<','23:03');
+    })->get();
+    dump($closer);
+
+    // whereExists查询 返回两个表中id相等的字段
+    // sql : select * form `users` where exists (select 1 from `content` content.id = users.id)
+    $whereExists = DB::table('users')->whereExists(function($query){
+        $query->select(DB::raw(1))->from('content')->whereRaw('content.id = users.id');
+    })->get();
+    dump($whereExists);
+    
+    // 子查询关联不同的表
+    // sql: select * from users where in (select id from content where created_at is not null )
+    // 用构建器：
+    // $users = DB::table('users')->whereNotNull('email_verified_at')->select('id');
+    // $posts = DB::table('posts')->whereInSub('user_id', $users)->get();
+});
+
+Route::get('join',function(){
+        //连接查询
+    //-- 内连接：使用比较运算符进行表间的连接，查询与连接条件匹配的数据
+    // -可分为等值连接和不等连接
+    // -等值连接(=)：select * from posts p inner join users u on p.user_id=u.id
+    // 不等值连接(<,>,<>[不等于]):select * from posts p inner join users u on p.user_id <> u.id 
+    // --外连接  outer关键字可以省略
+    // -左连接：返回左表中的所有行，如果左表中的行在右表中没有匹配行，则返回结果中右表中的对应列返回空值，如 select * from posts p left (outer) join users u on p.user_id = u.id
+    // 右连接：与左连接相反，返回右表中的所有行，如果右表中的行在左表中没有匹配行，则结果中左表中的对应列返回空值，如 select * from posts p right join users u on p.user_id = u.id
+    // 全连接：返回左表和右表中的所有行。当某行在另一表中没有匹配行，则另一表中的列返回空值，如 select * from posts p full join users u on p.user_id = u.id
+    // 交叉连接：也称笛卡尔积，不带 where 条件子句，它将会返回被连接的两个表的笛卡尔积，返回结果的行数等于两个表行数的乘积，
+    // 如果带 where，返回的是匹配的行数。如 select * from posts p cross join users u on p.user_id = u.id
+
+    // 创建并填充posts表 ：php artisan make:migration create_posts_table --create=posts
+    // 然后运行: php artisan migrate创建数据表
+    // 在models目录下创建模型： php artisan make:model \models\Post
+    // 为模型创建工厂类 php artisan make:factory PostFactory --model=post
+    // 模型工厂编写好后 创建填充类： php artisan make:seeder PostTableSeeder
+    // 编写好填充器类后 运行填充器：php artisan db:seed
+
+    // 开始用构建器查询：
+    // 内连接：
+    $innerJoin = DB::table('posts')->join('users','users.id','=','posts.user_id')
+    ->select('posts.*','users.name','users.id','users.email')->get();
+    dump($innerJoin);
+    // 左连接：
+    $leftJoin = DB::table('posts')->leftJoin('users','users.id','=','posts.user_id')
+    ->select('posts.*','users.name','users.id','users.email')->get();
+    dump($leftJoin);
+    // 右连接与左连接类似，只是基表在是右边的表
+    // 其它连接语句
+    // 上面三种是比较常见的连接语句，查询构建器没有提供单独的方法支持全连接，
+    // 但是有对交叉连接的支持，对应的方法 crossJoin，使用方法如上面几种查询类似，
+
+    // 更加复杂的连接条件用匿名函数组装连接查询的条件来构建查询语句
+    // select posts.* , users.name,users.email from posts inner join users on users.id
+    // =posts.user_id and users.email_verified_at is not null where posts.views>0
+     $join = DB::table('posts')->join('users',function($sql){
+        $sql->on('users.id','=','posts.user_id')->whereNotNull('users.email_verified_at');
+     })->select('posts.*','users.name','users.email')->where('posts.views','>',0)->get();
+     dump($join);
+
+    //排序
+    $orderBy = DB::table('posts')->orderBy('id','desc')->get();
+    dump($orderBy);
+
+    $orderByRaw = DB::table('posts')->orderByRaw('id desc')->get();
+    dump($orderByRaw);
+
+    // 随机排序
+    $inRandomOrder = DB::table('posts')->inRandomOrder()->get();
+    dump($inRandomOrder);
+});
+
