@@ -1,6 +1,9 @@
 <?php
 namespace App;
 
+use App\models\Content;
+use App\models\Post;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -489,5 +492,135 @@ Route::get('join',function(){
     // 随机排序
     $inRandomOrder = DB::table('posts')->inRandomOrder()->get();
     dump($inRandomOrder);
+
+});
+// Eloquent模型
+Route::get('post',function(){
+    // 返回一张表的所有记录
+    $posts = Post::all();
+    dump($posts);
+    // 遍历出集合
+    foreach($posts as $v){
+        // dump($v);
+        // dump($v->title);
+    }
+    // 和查询构建器一样，如果结果集很大的话，也可以通过chunk方法分块查询结果
+    Post::chunk(10,function($postss){//因为前面Post已经申明类，所以匿名函数类的参数时完全重新定义的，与上面的没关系
+        foreach($postss as $post ){
+            // dump($post->title);
+            if($post->views ==0){
+                echo "views : 0";
+                continue;
+            }else{
+                dump($post->title.':'.$post->views);
+            }
+        }
+    });
+    dump('----------cursor()--------------');
+    // 还可以用cursor方法每次只获取一条查询结果，从而最大限度减少内存消耗
+    foreach(Post::cursor() as $post){
+        // dump($post->title.':'.$post->content);
+    }
+
+    // 获取指定条件查询结果：where 和 select方法
+    $postWhere = Post::where('views','>',5)->select('id', 'title', 'content')->get();
+    dump($postWhere);
+
+    dump('----------排序和分页----------------');
+    $limit = Post::where('views','>',0)->orderBy('id','desc')->offset(10)->limit(5)->get();
+    foreach($limit as $v){
+        dump($v->id);
+    }
+
+    // 获取单条记录
+    $singleRecord = Post::where('user_id',1)->first();
+    dump($singleRecord);
+
+    // 如果查询条件的主键是id的话，还可以通过find方法查询
+    $findRedord = Post::find(1);
+    dump($findRedord);
+
+    // 模型类型为空时会返回null，如果想返回404 可用findOrFail()方法或者firstOrFail()
+    $findOrFail = Post::findOrFail(1);//失败后 后面的语句都不能执行
+    dump($findOrFail);
+    dump(666);
+
+    
+});
+// firstOrCreate 方法在设置完模型属性后会将该模型记录保存到数据库中，而 firstOrNew 不会：
+Route::get('post_news',function(){
+    $firstC = Post::firstOrCreate([
+        'user_id'=>'1',
+        'title'=>'firstOrCreate测试文章标题',
+        'content'=>'firstOrCreate测试内容'
+    ]);
+    dump($firstC);
+    // Add [user_id] to fillable property to allow mass assignment on [App\models\Post].
+
 });
 
+// 通过命令插入数据：
+// 1、php artisan tinker
+// 2、use App\Models\Post;
+// 3、$post = new Post;
+// 4、$post->title="测试标题";
+// 5、$post->content="测试文章";
+// 6、$post->save();
+
+// 删除数据
+Route::get('del',function(){
+    // $post = Post::find(20);
+    // $post->delete(); //删除id为21的数据，并返回其数据
+    // dump($post);//会返回id为21的数据
+
+    // 传入数组批量删除
+    $post2 = Post::destroy([15,16,17]);
+    dump($post2);//返回删除成功的行数
+
+    // 也可以通过查询构建器的方式删除指定记录
+    // $user = User::where('id',15)->first();
+    // $user->delete();
+});
+
+Route::post('guard',function(Request $request){
+    // $post =  new Post($request->all());
+    $post = new Post([
+        'title' => '测试文章标题', 
+        'content' => '测试文章内容'
+    ]);
+    $post->user_id = 0;
+    $post->save();
+});
+
+// 测试加密和解密
+Route::get('crypt',function(){
+    // 加密
+    $encrypt =  encrypt(123456789);
+    // 随机的
+    dump($encrypt); //eyJpdiI6IkdzdDkvOUhmd2VjYXQraGZMVU8zSkE9PSIsInZhbHVlIjoiTlplZFhvVmxDZm9WWENqeEdqL2xBUT09IiwibWFjIjoiMGVjNGZkZDQ0MTgwMzk4N2U1MGVmOGY0ZWM4NGU1YmYyMzU2NTdlMzhkNTlm 
+
+    // 解密
+    $decrypt = decrypt($encrypt);
+    dump($decrypt);//123456789   
+});
+
+
+Route::get('getall',function(){
+    $data1 = DB::table('posts')->where('views',3)->get();//返回集合 集合内再装下数组
+    $data2 = DB::table('posts')->where('views',3)->get()->all();//直接返回数组
+    dump($data1,$data2);
+});
+
+Route::get('views',function(){
+    // $data['test'] =['name'=>'qjs','work'=>'programer']; 
+    $data=666;   //视图中报错
+    $data2 = ['num'=>555]; //能在视图中正常输出
+    return view('welcome',$data2);  //输出的都是数组，
+});
+Route::get('testscope',function(){
+    $data =  User::all();//通过模型查询表中所有数据
+    // 通过Telescope调试工具可以看到Queries中生成了一条查询数据：
+    // select * from `users` where `email_verified_at` is null
+    //这是由User.php和EmailVerifIedAtScope.php连个文件共同来完成的效果
+    dump ($data);//结果也就返回了表中所查询字段为空的数据
+});
